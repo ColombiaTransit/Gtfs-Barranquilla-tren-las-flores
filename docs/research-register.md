@@ -12,7 +12,7 @@ Last source review: 2026-11-06. All timetable assumptions below require field ve
 | Headway | 20 minutes | TikTok video reported by project contributor | Secondary; model assumption |
 | Opening hours | Tue–Fri 10:00–17:00; weekends and holidays 08:00–17:00 | TaQui | Published, currency not verified |
 | Monday holiday | Operates, with Tuesday maintenance closure | TaQui | Published, currency not verified |
-| Last return | 17:30 from Puerto Mocho | TaQui | Published, not included in provisional model |
+| Last return | 17:30 from Puerto Mocho | TaQui | Published; included as an additional one-way trip on all operating days |
 | Fare | COP 10,000 return | TaQui | Historical published figure, not included in GTFS |
 
 ## Holiday modeling decision (2026-11-06)
@@ -21,7 +21,7 @@ All Colombian public holidays use the existing weekend departure pattern (08:00 
 The route is encoded as standard tram (`route_type=0`) with short name `TLF`.
 
 ## Open issues
-1. Confirm first departures and actual last return (17:30 is not on a 20-minute grid).
+1. Confirm first departures and whether the published 17:30 final return operates every service day. The 17:30 return is explicitly included outside the assumed 20-minute grid.
 2. Verify exact platform boarding points and stop coordinates.
 3. Verify simultaneous two-vehicle service and passing loop usage.
 4. Verify current ticketing and holiday operations.
