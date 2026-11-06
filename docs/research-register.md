@@ -15,6 +15,11 @@ Last source review: 2026-11-06. All timetable assumptions below require field ve
 | Last return | 17:30 from Puerto Mocho | TaQui | Published, not included in provisional model |
 | Fare | COP 10,000 return | TaQui | Historical published figure, not included in GTFS |
 
+## Holiday modeling decision (2026-11-06)
+All Colombian public holidays use the existing weekend departure pattern (08:00 start, assumed 20-minute interval), because no separate holiday frequency data is available. Holidays falling on Tue–Fri replace weekday service; holiday Mondays activate weekend service. The Tuesday following a holiday Monday is excluded for maintenance. This is an explicit timetable modeling assumption, not a verified holiday timetable.
+
+The route is encoded as standard tram (`route_type=0`) with short name `TLF`.
+
 ## Open issues
 1. Confirm first departures and actual last return (17:30 is not on a 20-minute grid).
 2. Verify exact platform boarding points and stop coordinates.
