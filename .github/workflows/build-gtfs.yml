@@ -1,0 +1,49 @@
+name: Build and validate GTFS
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/**'
+      - 'data/**'
+      - 'requirements.txt'
+      - '.github/workflows/build-gtfs.yml'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: python scripts/build_gtfs.py
+      - name: Install Java for MobilityData validator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Download MobilityData validator
+        run: |
+          python - <<'PY'
+          import json, urllib.request
+          api="https://api.github.com/repos/MobilityData/gtfs-validator/releases/latest"
+          req=urllib.request.Request(api,headers={"User-Agent":"ColombiaTransit"})
+          with urllib.request.urlopen(req) as r: release=json.load(r)
+          assets=[a for a in release["assets"] if a["name"].endswith(".jar") and "sources" not in a["name"]]
+          if not assets: raise SystemExit("No validator JAR in latest release")
+          urllib.request.urlretrieve(assets[0]["browser_download_url"],"validator.jar")
+          PY
+      - name: Validate with MobilityData
+        run: |
+          mkdir -p validation
+          java -jar validator.jar -i dist/gtfs.zip -o validation
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtfs-and-validation
+          path: |
+            dist/gtfs.zip
+            validation/
