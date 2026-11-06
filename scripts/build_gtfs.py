@@ -65,12 +65,15 @@ def main():
         for minute in range(begin,1001,20):  # last 16:40
             for direction,(a,b) in enumerate([("LF","PM"),("PM","LF")]):
                 trip=f"{service}_{minute}_{direction}"
-                trips.append(["TLF",service,trip,"Puerto Mocho" if direction==0 else "Las Flores",direction,"TLF_MAIN"])
+                shape_id="TLF_MAIN" if direction==0 else "TLF_RETURN"
+                trips.append(["TLF",service,trip,"Puerto Mocho" if direction==0 else "Las Flores",direction,shape_id])
                 stop_times.extend([[trip,clock(minute),clock(minute),a,1,0],
                                    [trip,clock(minute+10),clock(minute+10),b,2,round(total,1)]])
     shapes=[]
     for i,((lon,lat),m) in enumerate(zip(coords,cumulative)):
         shapes.append(["TLF_MAIN",lat,lon,i+1,round(m,1)])
+    for i,((lon,lat),m) in enumerate(zip(reversed(coords),reversed(cumulative))):
+        shapes.append(["TLF_RETURN",lat,lon,i+1,round(total-m,1)])
     files={
         "agency.txt":csvbytes(["agency_id","agency_name","agency_url","agency_timezone","agency_lang"],[["EDUBAR","EDUBAR S.A.","https://www.edubar.com.co/",TZ,"es"]]),
         "stops.txt":csvbytes(["stop_id","stop_name","stop_lat","stop_lon","location_type"],[[id,name,lat,lon,0] for id,name,lat,lon in stops]),
