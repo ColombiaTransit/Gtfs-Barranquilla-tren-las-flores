@@ -74,6 +74,13 @@ def main():
                 trips.append(["TLF",service,trip,"Puerto Mocho" if direction==0 else "Las Flores",direction,shape_id])
                 stop_times.extend([[trip,clock(minute),clock(minute),a,1,0],
                                    [trip,clock(minute+10),clock(minute+10),b,2,round(total,1)]])
+    # Published final return from Puerto Mocho at 17:30 (TaQui).
+    # This is an additional trip outside the assumed 20-minute departure grid.
+    for service in ("weekday", "weekend"):
+        trip=f"{service}_last_return_1730"
+        trips.append(["TLF",service,trip,"Las Flores",1,"TLF_RETURN"])
+        stop_times.extend([[trip,"17:30:00","17:30:00","PM",1,0],
+                           [trip,"17:40:00","17:40:00","LF",2,round(total,1)]])
     shapes=[]
     for i,((lon,lat),m) in enumerate(zip(coords,cumulative)):
         shapes.append(["TLF_MAIN",lat,lon,i+1,round(m,1)])
