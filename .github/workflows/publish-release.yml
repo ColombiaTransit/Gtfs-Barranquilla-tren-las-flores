@@ -1,0 +1,84 @@
+name: Publish permanent GTFS release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-release.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gtfs-permanent-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - name: Build GTFS
+        run: python scripts/build_gtfs.py
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Download MobilityData validator
+        run: |
+          python - <<'PY'
+          import json, urllib.request
+          api = "https://api.github.com/repos/MobilityData/gtfs-validator/releases/latest"
+          request = urllib.request.Request(api, headers={"User-Agent": "ColombiaTransit"})
+          with urllib.request.urlopen(request) as response:
+              release = json.load(response)
+          assets = [a for a in release["assets"] if a["name"].endswith(".jar") and "sources" not in a["name"]]
+          if not assets:
+              raise SystemExit("No validator JAR available")
+          urllib.request.urlretrieve(assets[0]["browser_download_url"], "validator.jar")
+          PY
+      - name: Validate GTFS
+        run: |
+          mkdir -p validation
+          java -jar validator.jar -i dist/gtfs.zip -o validation
+      - name: Require zero validator errors
+        run: |
+          python - <<'PY'
+          import json
+          from collections import Counter
+          with open("validation/report.json", encoding="utf-8") as f:
+              report = json.load(f)
+          counts = Counter()
+          for notice in report.get("notices", []):
+              counts[notice.get("severity", "UNKNOWN")] += notice.get("totalNotices", 1)
+          print("Validator notices:", dict(counts))
+          errors = [n for n in report.get("notices", []) if n.get("severity") == "ERROR"]
+          if errors:
+              raise SystemExit("GTFS validation contains ERROR notices; refusing release")
+          PY
+      - name: Prepare fixed asset filename
+        run: cp dist/gtfs.zip dist/gtfs.zip.tmp && mv dist/gtfs.zip.tmp dist/gtfs-tren-las-flores.zip
+      - name: Create or update permanent release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view v0.1.0 >/dev/null 2>&1; then
+            gh release upload v0.1.0 dist/gtfs-tren-las-flores.zip --clobber
+          else
+            gh release create v0.1.0 dist/gtfs-tren-las-flores.zip \
+              --target "${GITHUB_SHA}" \
+              --title "Tren Las Flores GTFS v0.1.0" \
+              --notes "Experimental static GTFS. Departures are modeled at 20-minute intervals; the published 17:30 Puerto Mocho return is included. Holiday service uses weekend hours by assumption. Source and research register are in this repository."
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtfs-release-and-validation
+          path: |
+            dist/gtfs-tren-las-flores.zip
+            validation/
