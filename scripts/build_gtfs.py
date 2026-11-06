@@ -42,26 +42,31 @@ def main():
     start=date(today.year,1,1)
     end=date(today.year+1,12,31)
     hol=country_holidays("CO",years=range(start.year,end.year+1))
-    # Three calendars: weekdays Tue–Fri, weekends, and holiday Monday service.
+    # Two calendars: Tue–Fri and weekends; public holidays use weekend hours.
     cal=[["weekday",0,1,1,1,1,0,0,start.strftime("%Y%m%d"),end.strftime("%Y%m%d")],
-         ["weekend",0,0,0,0,0,1,1,start.strftime("%Y%m%d"),end.strftime("%Y%m%d")],
-         ["holiday_monday",0,0,0,0,0,0,0,start.strftime("%Y%m%d"),end.strftime("%Y%m%d")]]
+         ["weekend",0,0,0,0,0,1,1,start.strftime("%Y%m%d"),end.strftime("%Y%m%d")]]
     exceptions=[]
     d=start
     while d<=end:
-        if d.weekday()==0 and d in hol:
-            exceptions.append(["holiday_monday",d.strftime("%Y%m%d"),1])
-            # Tuesday following a Monday holiday is closed for maintenance.
-            nxt=d+timedelta(days=1)
-            if nxt<=end:
-                exceptions.append(["weekday",nxt.strftime("%Y%m%d"),2])
+        stamp=d.strftime("%Y%m%d")
+        if d in hol:
+            # Holidays use weekend opening hours; no separate frequency evidence.
+            if d.weekday()<=4:
+                exceptions.append(["weekend",stamp,1])
+                if d.weekday()!=0:
+                    exceptions.append(["weekday",stamp,2])
+            if d.weekday()==0:
+                # Tuesday following a holiday Monday is a maintenance closure.
+                nxt=d+timedelta(days=1)
+                if nxt<=end:
+                    exceptions.append(["weekday",nxt.strftime("%Y%m%d"),2])
         d+=timedelta(days=1)
-    routes=[["TLF","EDUBAR","Tren Las Flores","Las Flores – Puerto Mocho",900]]
+    routes=[["TLF","EDUBAR","TLF","Las Flores – Puerto Mocho",0]]
     trips=[]
     stop_times=[]
     # Two trains are modeled as simultaneous opposite-direction departures.
     # Departures are estimated, not officially published.
-    for service,begin in [("weekday",600),("weekend",480),("holiday_monday",480)]:
+    for service,begin in [("weekday",600),("weekend",480)]:
         for minute in range(begin,1001,20):  # last 16:40
             for direction,(a,b) in enumerate([("LF","PM"),("PM","LF")]):
                 trip=f"{service}_{minute}_{direction}"
