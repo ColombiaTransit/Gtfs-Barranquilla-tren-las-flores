@@ -95,7 +95,7 @@ def main():
         "trips.txt":csvbytes(["route_id","service_id","trip_id","trip_headsign","direction_id","shape_id"],trips),
         "stop_times.txt":csvbytes(["trip_id","arrival_time","departure_time","stop_id","stop_sequence","shape_dist_traveled"],stop_times),
         "shapes.txt":csvbytes(["shape_id","shape_pt_lat","shape_pt_lon","shape_pt_sequence","shape_dist_traveled"],shapes),
-        "feed_info.txt":csvbytes(["feed_publisher_name","feed_publisher_url","feed_lang","feed_start_date","feed_end_date","feed_version"],[["ColombiaTransit","https://github.com/ColombiaTransit/Gtfs-Barranquilla-tren-las-flores","es",start.strftime("%Y%m%d"),end.strftime("%Y%m%d"),today.strftime("%Y%m%d")]]),
+        "feed_info.txt":csvbytes(["feed_publisher_name","feed_publisher_url","feed_lang","feed_start_date","feed_end_date","feed_version","feed_contact_url"],[["ColombiaTransit","https://github.com/ColombiaTransit/Gtfs-Barranquilla-tren-las-flores","es",start.strftime("%Y%m%d"),end.strftime("%Y%m%d"),today.strftime("%Y%m%d"),"https://github.com/ColombiaTransit/Gtfs-Barranquilla-tren-las-flores/issues"]]),
     }
     OUT.parent.mkdir(exist_ok=True)
     with zipfile.ZipFile(OUT,"w",compression=zipfile.ZIP_DEFLATED) as z:
